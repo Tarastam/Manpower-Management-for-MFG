@@ -1,0 +1,6 @@
+/* Compact navigation with accessible contrast */
+.analytics-page{padding-top:0!important}.metrics-section{padding-top:48px!important}
+.navbar{background:#42435a!important;border-color:#42435a!important;box-shadow:none!important;min-height:56px;padding:0!important}
+.navbar .container{min-height:56px}.navbar-brand{color:#fff!important;font-size:14px!important;line-height:1!important}.navbar-brand:before{height:20px!important;width:20px!important;font-size:10px!important;border-radius:6px!important;margin-right:7px!important}
+.nav-link{color:#f0f1fa!important;font-size:12px!important;line-height:1!important;padding:8px 11px!important}.nav-link:hover,.nav-link:focus{color:#fff!important}.navbar .small,.navbar .text-muted{color:#d9daeb!important;font-size:12px!important}.navbar .btn{font-size:11px!important;line-height:1!important;padding:7px 11px!important}
+@media(max-width:620px){.navbar,.navbar .container{min-height:50px}.navbar-brand{font-size:13px!important}.navbar-toggler{padding:4px 7px!important}}

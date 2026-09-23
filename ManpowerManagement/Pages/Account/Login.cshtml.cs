@@ -1,0 +1,3 @@
+using ManpowerManagement.Models;using Microsoft.AspNetCore.Identity;using Microsoft.AspNetCore.Mvc;using Microsoft.AspNetCore.Mvc.RazorPages;
+namespace ManpowerManagement.Pages.Account;
+public class LoginModel(SignInManager<ApplicationUser> signIn):PageModel{public class InputModel{public string UserName{get;set;}="";public string Password{get;set;}="";}[BindProperty]public InputModel Input{get;set;}=new();public void OnGet(){}public async Task<IActionResult> OnPostAsync(){var r=await signIn.PasswordSignInAsync(Input.UserName,Input.Password,false,false);if(r.Succeeded)return LocalRedirect(Url.Content("~/Tickets/Manage"));ModelState.AddModelError(string.Empty,"Invalid login.");return Page();}}

@@ -1,0 +1,71 @@
+@page
+@model IndexModel
+@{ ViewData["Title"] = "Workforce intelligence"; }
+@functions {
+    void RenderWorkshopOptions(List<IndexModel.WorkshopNode> nodes)
+    {
+        foreach (var n in nodes)
+        {
+            var hasChildren = n.Children.Count > 0;
+            <li class="ws-item" data-depth="@n.Depth">
+                <div class="ws-row @(n.Id == Model.WorkshopId ? "active" : "")">
+                    <button type="button" class="ws-pick" data-id="@n.Id" data-name="@n.Name">@n.Name</button>
+                    @if (hasChildren)
+                    {
+                        <button type="button" class="ws-toggle" aria-label="Expand @n.Name">›</button>
+                    }
+                </div>
+                @if (hasChildren)
+                {
+                    <ul class="ws-children">
+                        @{ RenderWorkshopOptions(n.Children); }
+                    </ul>
+                }
+            </li>
+        }
+    }
+}
+<div class="analytics-page">
+  <section id="workforce-overview" class="metrics-section"><div class="section-heading"><div><div class="eyebrow">Workforce dashboard</div><h2>The numbers that move your business.</h2></div><form class="dashboard-filter" method="get" id="dashboardFilter"><label class="visually-hidden" for="month">Reporting month</label><input id="month" type="month" name="month" value="@Model.Month"/><input type="hidden" name="workshopId" id="workshopId" value="@Model.WorkshopId"/><div class="ws-dropdown" id="wsDropdown"><button type="button" class="ws-dropdown-toggle" id="wsDropdownToggle"><span id="wsDropdownLabel">@Model.WorkshopLabel</span><i class="ws-caret">⌄</i></button><div class="ws-panel" id="wsPanel"><ul class="ws-tree">@{ RenderWorkshopOptions(Model.WorkshopTree); }</ul></div></div><button type="submit">Refresh</button></form></div><p class="section-subtitle">@Model.Month · @Model.WorkshopLabel <span class="data-fresh"><i></i> Data updated today</span></p><div class="metric-grid"><article class="metric-card"><div class="metric-icon violet">○</div><small>ACTIVE HEADCOUNT</small><strong>@Model.Headcount.ToString("N0")</strong><p><span class="positive">↑ 4.2%</span> vs. last month</p></article><article class="metric-card"><div class="metric-icon blue">◷</div><small>WORKING HOURS (MTD)</small><strong>@Model.TotalHours.ToString("N0")</strong><p>of @Model.ExpectedHoursMtd.ToString("N0") hrs expected @((Model.ExpectedHoursMtd==0?"—":(Model.TotalHours/Model.ExpectedHoursMtd*100m).ToString("N1")+"%"))</p></article><article class="metric-card"><div class="metric-icon amber">◔</div><small>ABSENCE RATE</small><strong>@Model.AbsentRatio.ToString("N1")<em>%</em></strong><p><span class="positive">↓ 0.6%</span> vs. last month</p></article><article class="metric-card"><div class="metric-icon coral">↗</div><small>TURNOVER RATE</small><strong>@Model.TurnoverRate.ToString("N1")<em>%</em></strong><p><span class="positive">↓ 1.1%</span> vs. last month</p></article></div></section>
+  <section class="insights-layout"><article class="insight-card leave-card"><div class="card-heading"><div><small>LEAVE INTELLIGENCE</small><h3>Absence at a glance</h3></div><a asp-page="/Attendance/Index">Details →</a></div><div class="leave-bars">@foreach(var r in Model.LeaveRows.Take(4)){<div class="leave-row"><div><span>@r.Name</span><b>@r.Rate.ToString("N1")%</b></div><div class="bar-track"><i style="width:@Math.Min(r.Rate * 12m, 100m).ToString(System.Globalization.CultureInfo.InvariantCulture)%"></i></div></div>}</div></article><article class="insight-card action-card"><div class="sparkle">✦</div><small>SMART SIGNAL</small><h3>Protect your<br/>peak capacity.</h3><p>Spot coverage gaps before they impact production.</p><a class="btn btn-light" asp-page="/Employees/Index">Explore team →</a></article></section>
+  <section class="features-section"><div class="feature-intro"><div class="eyebrow">Everything in one view</div><h2>Less administration.<br/>More momentum.</h2><p>One focused workspace for the signals your operation depends on.</p></div><div class="feature-grid"><article><span class="feature-icon">⌁</span><h3>Real-time visibility</h3><p>Bring attendance, hours, and headcount into one clear operating picture.</p></article><article><span class="feature-icon">◈</span><h3>Decisions with context</h3><p>Turn patterns into timely action with straightforward reporting.</p></article><article><span class="feature-icon">↗</span><h3>Built to scale</h3><p>Stay aligned from a single workshop to your entire workforce.</p></article></div></section>
+  <section class="pricing-section"><div class="pricing-intro"><div class="eyebrow">Simple, transparent pricing</div><h2>Start with clarity.</h2><p>Choose the level of workforce intelligence your team needs.</p></div><div class="pricing-grid"><article class="price-card"><small>STARTER</small><h3>Essential visibility</h3><p>For teams getting their workforce data in one place.</p><strong>$29 <span>/ month</span></strong><a class="btn btn-outline-light" asp-page="/Account/Login">Get started</a><ul><li>Core workforce metrics</li><li>Monthly reporting</li><li>Up to 50 employees</li></ul></article><article class="price-card featured"><div class="popular-label">MOST POPULAR</div><small>GROWTH</small><h3>Operational intelligence</h3><p>For teams building a sharper, faster operation.</p><strong>$79 <span>/ month</span></strong><a class="btn btn-primary" asp-page="/Account/Login">Start free trial</a><ul><li>Everything in Starter</li><li>Live attendance insights</li><li>Unlimited employees</li></ul></article><article class="price-card"><small>ENTERPRISE</small><h3>Built around you</h3><p>For complex organizations that need tailored support.</p><strong>Let's talk</strong><a class="btn btn-outline-light" asp-page="/Account/Login">Contact us</a><ul><li>Custom reporting</li><li>Priority support</li><li>Advanced controls</li></ul></article></div></section>
+</div>
+<script>
+(function () {
+    var dropdown = document.getElementById('wsDropdown');
+    var toggle = document.getElementById('wsDropdownToggle');
+    var panel = document.getElementById('wsPanel');
+    var hiddenInput = document.getElementById('workshopId');
+    var label = document.getElementById('wsDropdownLabel');
+    var form = document.getElementById('dashboardFilter');
+    if (!dropdown) return;
+
+    toggle.addEventListener('click', function (e) {
+        e.stopPropagation();
+        dropdown.classList.toggle('open');
+    });
+
+    panel.querySelectorAll('.ws-toggle').forEach(function (btn) {
+        btn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            var item = btn.closest('.ws-item');
+            item.classList.toggle('expanded');
+        });
+    });
+
+    panel.querySelectorAll('.ws-pick').forEach(function (btn) {
+        btn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            hiddenInput.value = btn.dataset.id;
+            label.textContent = btn.dataset.name;
+            dropdown.classList.remove('open');
+            form.submit();
+        });
+    });
+
+    document.addEventListener('click', function (e) {
+        if (!dropdown.contains(e.target)) dropdown.classList.remove('open');
+    });
+})();
+</script>

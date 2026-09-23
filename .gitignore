@@ -1,0 +1,36 @@
+## .NET build output
+bin/
+obj/
+*.dll
+*.pdb
+
+## Published / run output folder (build artifacts, not source)
+ManpowerManagement-Run/
+
+## Local database
+*.db
+*.db-shm
+*.db-wal
+
+## Logs
+*.log
+
+## Visual Studio / Rider
+.vs/
+.idea/
+*.user
+*.suo
+
+## OS files
+Thumbs.db
+.DS_Store
+
+## Environment / secrets
+appsettings.Development.json
+appsettings.*.local.json
+*.pfx
+
+## Local tooling (not part of the project source)
+.dotnet-cli/
+.agents/
+.claude/

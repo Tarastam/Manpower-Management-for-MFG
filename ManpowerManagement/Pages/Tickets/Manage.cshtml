@@ -1,0 +1,4 @@
+@page
+@model ManpowerManagement.Pages.Tickets.ManageModel
+@{ViewData["Title"]="Ticket Approval";}
+<h1 class="h3">Pending Resignation Tickets</h1><table class="table"><thead><tr><th>Submitted</th><th>Employee</th><th>Requester</th><th>Workshop</th><th>Decision</th></tr></thead><tbody>@foreach(var t in Model.Tickets){<tr><td>@t.SubmittedAtUtc.ToLocalTime()</td><td>@t.Employee?.EmployeeId - @t.Employee?.FullName</td><td>@t.RequesterEmployeeId / @t.RequesterShift</td><td>@t.Workshop?.Name</td><td><form method="post" class="d-flex gap-2"><input type="hidden" name="id" value="@t.Id"/><input class="form-control" type="date" name="effectiveDate" value="@DateTime.Today.ToString("yyyy-MM-dd")"/><button class="btn btn-success btn-sm" name="decision" value="approve">Approve</button><button class="btn btn-outline-danger btn-sm" name="decision" value="reject">Reject</button></form></td></tr>}</tbody></table>

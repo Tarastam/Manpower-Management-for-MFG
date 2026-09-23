@@ -1,0 +1,5 @@
+@page
+@model ManpowerManagement.Pages.Admin.ImportModel
+@{ViewData["Title"]="Import";}
+<h1 class="h3">Excel Import</h1>@if(Model.Message!=null){<div class="alert alert-info">@Model.Message</div>}
+<div class="row g-3"><div class="col-md-6"><div class="card card-body"><h2 class="h5">Employee master</h2><p class="small text-muted">Columns: EmployeeId, FullName, Workshop, StartDate, EmploymentType</p><form method="post" enctype="multipart/form-data" asp-page-handler="Employees"><input class="form-control mb-2" type="file" name="file" accept=".xlsx" required/><input class="form-control mb-2" type="date" name="effectiveDate" required/><button class="btn btn-primary">Import employees</button></form></div></div><div class="col-md-6"><div class="card card-body"><h2 class="h5">Calendar</h2><p class="small text-muted">Columns: WorkDate, Workshop, IsWorkingDay</p><form method="post" enctype="multipart/form-data" asp-page-handler="Calendar"><input class="form-control mb-2" type="file" name="file" accept=".xlsx" required/><button class="btn btn-primary">Import calendar</button></form></div></div></div>

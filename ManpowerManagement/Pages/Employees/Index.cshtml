@@ -1,0 +1,264 @@
+@page
+@model ManpowerManagement.Pages.Employees.IndexModel
+@{
+    ViewData["Title"] = "Employees";
+    var shiftOptionsHtml = string.Concat(new[] { "A", "B", "C", "Day" }.Select(shift => $"<option value=\"{shift}\">{shift}</option>"));
+    var stateOptionsHtml = string.Concat(Enum.GetNames<ManpowerManagement.Models.EmploymentState>().Select(state => $"<option value=\"{state}\">{state}</option>"));
+    var workshopOptionsHtml = string.Concat(Model.WorkshopOptions.Select(ws => $"<option value=\"{ws.Value}\">{ws.Text}</option>"));
+    var groupOptionsHtml = string.Concat(Model.GroupOptions.Select(g => $"<option value=\"{g.Text}\">{g.Text}</option>"));
+}
+<div class="d-flex justify-content-between align-items-center"><div><h1 class="h3 mb-0">Employees</h1><small class="text-muted">Available to Admin and Approval modes.</small></div><button class="btn btn-primary" data-bs-toggle="collapse" data-bs-target="#employeeForm">Add employee</button></div>
+@if (Model.Message is not null) { <div class="alert alert-success mt-3">@Model.Message</div> }
+@if (Model.Error is not null) { <div class="alert alert-danger mt-3">@Model.Error</div> }
+<div id="employeeForm" class="collapse @(Model.Input.Id is not null || Model.Error is not null ? "show" : "") card card-body mt-3">
+<ul class="nav nav-tabs mb-3 employee-tabs"><li class="nav-item"><button type="button" class="nav-link active" data-bs-toggle="tab" data-bs-target="#paste">Paste from Excel</button></li><li class="nav-item"><button type="button" class="nav-link" data-bs-toggle="tab" data-bs-target="#single">Add / edit one</button></li></ul>
+<div class="tab-content"><div id="paste" class="tab-pane fade show active"><form method="post" asp-page-handler="Batch" id="batchEmployeeForm"><div class="d-flex flex-wrap align-items-end justify-content-between gap-2 mb-2"><div><div class="form-label fw-semibold mb-0">Employee grid</div><div class="form-text">Click a cell and paste one Excel column (many rows), then paste the next column. You can also paste a complete range.</div></div><div class="d-flex flex-wrap align-items-end gap-2 employee-grid-controls"><div><label class="form-label mb-1" asp-for="BatchWorkshop">Workshop</label><select class="form-select form-select-sm" asp-for="BatchWorkshop" required><option value="">Select workshop</option>@foreach (var name in ManpowerManagement.Data.SeedData.EmployeeWorkshopNames) { <option>@name</option> }</select></div><div><label class="form-label mb-1" asp-for="BatchShift">Shift</label><select class="form-select form-select-sm" asp-for="BatchShift" required><option value="">Select shift</option><option>A</option><option>B</option><option>C</option><option>Day</option></select></div></div></div><div class="form-text mb-2">Workshop and Shift above apply to every row in this save.</div><div class="table-responsive employee-paste-grid-wrap"><table class="table table-bordered table-sm mb-0 employee-paste-grid" id="employeeGrid"><thead><tr><th scope="col">#</th><th scope="col">Emp ID</th><th scope="col">First Name</th><th scope="col">Last Name</th><th scope="col">Job Grade</th><th scope="col">Process</th><th scope="col">Accommodation</th><th scope="col">Tel. No</th><th scope="col">Status</th><th scope="col">Special Groups</th><th scope="col">Remark</th></tr></thead><tbody>@for (var i = 0; i < Model.BatchRows.Count; i++) { <tr><th scope="row"><button type="button" class="btn btn-sm btn-outline-danger employee-row-remove" aria-label="Delete row @(i + 1)" title="Delete row">&minus;</button><span class="employee-row-number">@(i + 1)</span></th><td><input class="form-control form-control-sm" asp-for="BatchRows[i].EmployeeId" data-row="@i" data-col="0" aria-label="Emp ID, row @(i + 1)" /></td><td><input class="form-control form-control-sm" asp-for="BatchRows[i].FirstName" data-row="@i" data-col="1" aria-label="First Name, row @(i + 1)" /></td><td><input class="form-control form-control-sm" asp-for="BatchRows[i].LastName" data-row="@i" data-col="2" aria-label="Last Name, row @(i + 1)" /></td><td><input class="form-control form-control-sm" asp-for="BatchRows[i].JobGrade" data-row="@i" data-col="3" aria-label="Job Grade, row @(i + 1)" /></td><td><input class="form-control form-control-sm" asp-for="BatchRows[i].Process" data-row="@i" data-col="4" aria-label="Process, row @(i + 1)" /></td><td><input class="form-control form-control-sm" asp-for="BatchRows[i].Accommodation" data-row="@i" data-col="5" aria-label="Accommodation, row @(i + 1)" /></td><td><input class="form-control form-control-sm" asp-for="BatchRows[i].TelephoneNumber" data-row="@i" data-col="6" aria-label="Tel. No, row @(i + 1)" /></td><td><input class="form-control form-control-sm" asp-for="BatchRows[i].Status" data-row="@i" data-col="7" aria-label="Status, row @(i + 1)" /></td><td><input class="form-control form-control-sm" asp-for="BatchRows[i].Groups" data-row="@i" data-col="8" aria-label="Special Groups, row @(i + 1)" /></td><td><input class="form-control form-control-sm" asp-for="BatchRows[i].Remark" data-row="@i" data-col="9" aria-label="Remark, row @(i + 1)" /></td></tr> }</tbody></table></div><div class="form-text mt-2">Required: Emp ID, First Name, and a Workshop/Shift selected above. Status is Active or Resigned. Special Groups: comma-separated names matching the Special Groups page.</div><button class="btn btn-success mt-3">Save employee rows</button></form></div>
+<div id="single" class="tab-pane fade">
+    <form method="post" class="row g-2">
+        <input type="hidden" asp-for="Input.Id" />
+        <div class="col-md-2"><label class="form-label" asp-for="Input.EmployeeId">Emp ID</label><input class="form-control" asp-for="Input.EmployeeId" required /></div>
+        <div class="col-md-3"><label class="form-label" asp-for="Input.FullName">Name</label><input class="form-control" asp-for="Input.FullName" required /></div>
+        <div class="col-md-2"><label class="form-label" asp-for="Input.JobGrade">Job Grade</label><input class="form-control" asp-for="Input.JobGrade" /></div>
+        <div class="col-md-2"><label class="form-label" asp-for="Input.Process">Process</label><input class="form-control" asp-for="Input.Process" /></div>
+        <div class="col-md-3"><label class="form-label" asp-for="Input.WorkshopId">Workshop</label><select class="form-select" asp-for="Input.WorkshopId" asp-items="Model.WorkshopOptions" required><option value="">Select workshop</option></select></div>
+        <div class="col-md-2"><label class="form-label" asp-for="Input.Shift">Shift</label><select class="form-select" asp-for="Input.Shift" required><option>A</option><option>B</option><option>C</option><option>Day</option></select></div>
+        <div class="col-md-3"><label class="form-label" asp-for="Input.Accommodation">Accommodation</label><input class="form-control" asp-for="Input.Accommodation" /></div>
+        <div class="col-md-2"><label class="form-label" asp-for="Input.TelephoneNumber">Tel. No</label><input class="form-control" asp-for="Input.TelephoneNumber" /></div>
+        <div class="col-md-2"><label class="form-label" asp-for="Input.EmploymentState">Status</label><select class="form-select" asp-for="Input.EmploymentState" asp-items="Html.GetEnumSelectList<ManpowerManagement.Models.EmploymentState>()"></select></div>
+        <div class="col-md-3"><label class="form-label" asp-for="Input.GroupIds">Special Groups</label><select class="form-select" asp-for="Input.GroupIds" asp-items="Model.GroupOptions" multiple size="3"></select></div>
+        <div class="col-md-4"><label class="form-label" asp-for="Input.Remark">Remark</label><input class="form-control" asp-for="Input.Remark" /></div>
+        <div class="col-md-2 align-self-end"><button class="btn btn-success w-100">Save</button></div>
+    </form>
+</div></div>
+</div>
+<div class="d-flex flex-wrap align-items-end justify-content-between gap-2 mt-4 mb-2">
+    <div class="d-flex flex-wrap gap-2 employee-filter-controls">
+        <div><label class="form-label mb-1 small">Search</label><input type="search" class="form-control form-control-sm" id="filterSearch" placeholder="Search Emp ID, Name, ..." style="min-width: 14rem;" /></div>
+        <div><label class="form-label mb-1 small">Workshop</label><select class="form-select form-select-sm" id="filterWorkshop"><option value="">All workshops</option>@foreach (var name in Model.Employees.Select(x => x.CurrentWorkshop?.Name).Where(x => !string.IsNullOrWhiteSpace(x)).Distinct().OrderBy(x => x)) { <option value="@name">@name</option> }</select></div>
+        <div><label class="form-label mb-1 small">Shift</label><select class="form-select form-select-sm" id="filterShift"><option value="">All shifts</option>@foreach (var shift in Model.Employees.Select(x => x.Shift).Where(x => !string.IsNullOrWhiteSpace(x)).Distinct().OrderBy(x => x)) { <option value="@shift">@shift</option> }</select></div>
+        <div><label class="form-label mb-1 small">Process</label><select class="form-select form-select-sm" id="filterProcess"><option value="">All processes</option>@foreach (var process in Model.Employees.Select(x => x.Process).Where(x => !string.IsNullOrWhiteSpace(x)).Distinct().OrderBy(x => x)) { <option value="@process">@process</option> }</select></div>
+        <div><label class="form-label mb-1 small">Special Group</label><select class="form-select form-select-sm" id="filterGroup"><option value="">All groups</option>@foreach (var group in Model.Employees.SelectMany(x => x.SpecialGroups).Select(x => x.SpecialGroup!.Name).Distinct().OrderBy(x => x)) { <option value="@group">@group</option> }</select></div>
+    </div>
+    <div class="d-flex gap-2">
+        <button type="button" id="gridEditToggle" class="btn btn-sm btn-outline-primary">Edit grid</button>
+        <button type="submit" form="employeeGridForm" id="gridSaveButton" class="btn btn-sm btn-success d-none">Save all changes</button>
+        <button type="submit" form="employeeBulkDeleteForm" id="gridBulkDeleteButton" class="btn btn-sm btn-outline-danger d-none" disabled>Delete selected</button>
+        <button type="button" id="gridCancelButton" class="btn btn-sm btn-outline-secondary d-none">Cancel</button>
+    </div>
+</div>
+<form method="post" asp-page-handler="GridSave" id="employeeGridForm">
+<div class="table-responsive employee-list-table-wrap"><table class="table table-hover table-sm mb-0 align-middle employee-list-table" id="employeeListTable"><thead><tr>
+    <th class="select-col d-none"><input type="checkbox" id="selectAllRows" aria-label="Select all rows" /></th>
+    <th class="sortable" data-sort="text" data-col="0">Emp ID <span class="sort-arrow"></span></th>
+    <th class="sortable" data-sort="text" data-col="1">Name <span class="sort-arrow"></span></th>
+    <th class="sortable" data-sort="text" data-col="2">Job Grade <span class="sort-arrow"></span></th>
+    <th class="sortable" data-sort="text" data-col="3">Process <span class="sort-arrow"></span></th>
+    <th class="sortable" data-sort="text" data-col="4">Workshop <span class="sort-arrow"></span></th>
+    <th class="sortable" data-sort="text" data-col="5">Shift <span class="sort-arrow"></span></th>
+    <th class="sortable" data-sort="text" data-col="6">Accommodation <span class="sort-arrow"></span></th>
+    <th class="sortable" data-sort="text" data-col="7">Tel. No <span class="sort-arrow"></span></th>
+    <th class="sortable" data-sort="text" data-col="8">Status <span class="sort-arrow"></span></th>
+    <th>Special Groups <span class="text-muted fw-normal small">(ctrl/cmd+click to select or clear)</span></th>
+    <th class="sortable" data-sort="text" data-col="9">Remark <span class="sort-arrow"></span></th>
+    <th></th>
+</tr></thead><tbody>
+@for (var i = 0; i < Model.Employees.Count; i++) { var e = Model.Employees[i];
+    <tr data-workshop="@e.CurrentWorkshop?.Name" data-shift="@e.Shift" data-process="@e.Process" data-groups="@string.Join(",", e.SpecialGroups.Select(x => x.SpecialGroup!.Name))" data-row="@i" data-id="@e.Id">
+        <td class="select-col d-none"><input type="checkbox" class="row-select-checkbox" value="@e.Id" aria-label="Select @e.EmployeeId" /></td>
+        <td data-field="EmployeeId" data-value="@e.EmployeeId"><input type="hidden" name="GridRows[@i].Id" value="@e.Id" /><span class="view-text">@e.EmployeeId</span></td>
+        <td data-field="FullName" data-value="@e.FullName"><span class="view-text">@e.FullName</span></td>
+        <td data-field="JobGrade" data-value="@e.JobGrade"><span class="view-text">@e.JobGrade</span></td>
+        <td data-field="Process" data-value="@e.Process"><span class="view-text">@e.Process</span></td>
+        <td data-field="WorkshopId" data-value="@e.CurrentWorkshop?.Name" data-selected="@e.CurrentWorkshopId"><span class="view-text">@e.CurrentWorkshop?.Name</span></td>
+        <td data-field="Shift" data-value="@e.Shift"><span class="view-text">@e.Shift</span></td>
+        <td data-field="Accommodation" data-value="@e.Accommodation"><span class="view-text">@e.Accommodation</span></td>
+        <td data-field="TelephoneNumber" data-value="@e.TelephoneNumber"><span class="view-text">@e.TelephoneNumber</span></td>
+        <td data-field="EmploymentState" data-value="@e.EmploymentState"><span class="view-text">@e.EmploymentState</span></td>
+        <td data-field="Groups" data-value="@string.Join(",", e.SpecialGroups.Select(x => x.SpecialGroup!.Name))"><span class="view-text">@foreach (var g in e.SpecialGroups.Select(x => x.SpecialGroup).Where(x => x is not null)) { <span class="badge me-1" style="background-color: @g!.ColorHex;">@g.Name</span> }</span></td>
+        <td data-field="Remark" data-value="@e.Remark"><span class="view-text">@e.Remark</span></td>
+        <td class="text-nowrap view-actions"><a class="btn btn-sm btn-outline-secondary" asp-route-editId="@e.Id">Edit</a> <button type="submit" class="btn btn-sm btn-outline-danger employee-delete-btn" data-employee-id="@e.Id">Delete</button></td>
+    </tr> }</tbody></table></div>
+</form>
+<form method="post" asp-page-handler="Delete" id="employeeDeleteForm"><input type="hidden" name="id" id="employeeDeleteFormId" /></form>
+<form method="post" asp-page-handler="BulkDelete" id="employeeBulkDeleteForm"></form>
+<template id="workshopOptionsTemplate">@Html.Raw(workshopOptionsHtml)</template>
+<template id="shiftOptionsTemplate">@Html.Raw(shiftOptionsHtml)</template>
+<template id="stateOptionsTemplate">@Html.Raw(stateOptionsHtml)</template>
+<template id="groupOptionsTemplate">@Html.Raw(groupOptionsHtml)</template>
+
+@section Scripts {
+<script>
+(() => {
+    if (document.querySelector('#Input_Id')?.value || document.querySelector('#Input_EmployeeId')?.value) {
+        bootstrap.Tab.getOrCreateInstance(document.querySelector('[data-bs-target="#single"]')).show();
+    }
+    const deleteForm = document.querySelector('#employeeDeleteForm');
+    const deleteFormId = document.querySelector('#employeeDeleteFormId');
+    document.querySelectorAll('.employee-delete-btn').forEach(btn => btn.addEventListener('click', event => {
+        event.preventDefault();
+        if (!confirm('Delete this employee? This cannot be undone.')) return;
+        deleteFormId.value = btn.dataset.employeeId;
+        deleteForm.submit();
+    }));
+
+    const listTable = document.querySelector('#employeeListTable');
+    const listBody = listTable?.querySelector('tbody');
+    if (listTable && listBody) {
+        // Sorting
+        let sortState = { col: null, dir: 1 };
+        listTable.querySelectorAll('th.sortable').forEach(th => th.addEventListener('click', () => {
+            const col = Number(th.dataset.col);
+            sortState.dir = sortState.col === col ? -sortState.dir : 1;
+            sortState.col = col;
+            listTable.querySelectorAll('th.sortable .sort-arrow').forEach(a => a.textContent = '');
+            th.querySelector('.sort-arrow').textContent = sortState.dir === 1 ? '▲' : '▼';
+            const rows = [...listBody.rows];
+            rows.sort((a, b) => {
+                const av = a.querySelectorAll('td[data-value]')[col]?.dataset.value ?? '';
+                const bv = b.querySelectorAll('td[data-value]')[col]?.dataset.value ?? '';
+                return av.localeCompare(bv, undefined, { numeric: true, sensitivity: 'base' }) * sortState.dir;
+            });
+            rows.forEach(row => listBody.appendChild(row));
+        }));
+
+        // Filtering
+        const filterSearch = document.querySelector('#filterSearch');
+        const filterWorkshop = document.querySelector('#filterWorkshop');
+        const filterShift = document.querySelector('#filterShift');
+        const filterProcess = document.querySelector('#filterProcess');
+        const filterGroup = document.querySelector('#filterGroup');
+        function applyFilters() {
+            const q = filterSearch.value.trim().toLowerCase(), ws = filterWorkshop.value, sh = filterShift.value, pr = filterProcess.value, gr = filterGroup.value;
+            [...listBody.rows].forEach(row => {
+                const text = row.textContent.toLowerCase();
+                const groups = (row.dataset.groups || '').split(',');
+                const match = (!q || text.includes(q)) && (!ws || row.dataset.workshop === ws) && (!sh || row.dataset.shift === sh) && (!pr || row.dataset.process === pr) && (!gr || groups.includes(gr));
+                row.classList.toggle('d-none', !match);
+            });
+        }
+        filterSearch.addEventListener('input', applyFilters);
+        [filterWorkshop, filterShift, filterProcess, filterGroup].forEach(el => el.addEventListener('change', applyFilters));
+
+        // Grid edit mode
+        const editToggle = document.querySelector('#gridEditToggle');
+        const saveButton = document.querySelector('#gridSaveButton');
+        const cancelButton = document.querySelector('#gridCancelButton');
+        const bulkDeleteButton = document.querySelector('#gridBulkDeleteButton');
+        const selectAllCheckbox = document.querySelector('#selectAllRows');
+        function updateBulkDeleteState() {
+            const anyChecked = [...listBody.querySelectorAll('.row-select-checkbox')].some(cb => cb.checked);
+            bulkDeleteButton.disabled = !anyChecked;
+        }
+        const selectOptionsHtml = {
+            WorkshopId: document.querySelector('#workshopOptionsTemplate').innerHTML,
+            Shift: document.querySelector('#shiftOptionsTemplate').innerHTML,
+            EmploymentState: document.querySelector('#stateOptionsTemplate').innerHTML,
+        };
+        const multiSelectOptionsHtml = {
+            Groups: document.querySelector('#groupOptionsTemplate').innerHTML,
+        };
+        let editInputsBuilt = false;
+        function buildEditInputs() {
+            if (editInputsBuilt) return;
+            editInputsBuilt = true;
+            listBody.querySelectorAll('tr[data-row]').forEach(row => {
+                const rowIndex = row.dataset.row;
+                row.querySelectorAll('td[data-field]').forEach(td => {
+                    const field = td.dataset.field;
+                    const name = `GridRows[${rowIndex}].${field}`;
+                    let input;
+                    if (field in multiSelectOptionsHtml) {
+                        input = document.createElement('select');
+                        input.className = 'form-select form-select-sm edit-input d-none';
+                        input.innerHTML = multiSelectOptionsHtml[field];
+                        input.name = name;
+                        input.multiple = true;
+                        input.size = 3;
+                        const selectedNames = (td.dataset.value ?? '').split(',').map(v => v.trim()).filter(Boolean);
+                        [...input.options].forEach(option => { option.selected = selectedNames.includes(option.value); });
+                    } else if (field in selectOptionsHtml) {
+                        input = document.createElement('select');
+                        input.className = 'form-select form-select-sm edit-input d-none';
+                        input.innerHTML = selectOptionsHtml[field];
+                        input.name = name;
+                        const selected = field === 'WorkshopId' ? td.dataset.selected : td.dataset.value;
+                        const option = [...input.options].find(o => o.value === selected);
+                        if (option) option.selected = true;
+                    } else {
+                        input = document.createElement('input');
+                        input.type = 'text';
+                        input.className = 'form-control form-control-sm edit-input d-none';
+                        input.name = name;
+                        input.value = td.dataset.value ?? '';
+                    }
+                    td.appendChild(input);
+                });
+            });
+        }
+        function setEditMode(on) {
+            if (on) buildEditInputs();
+            listTable.querySelectorAll('.view-text').forEach(el => el.classList.toggle('d-none', on));
+            listTable.querySelectorAll('.edit-input').forEach(el => el.classList.toggle('d-none', !on));
+            listTable.querySelectorAll('.view-actions').forEach(el => el.classList.toggle('d-none', on));
+            listTable.querySelectorAll('.select-col').forEach(el => el.classList.toggle('d-none', !on));
+            editToggle.classList.toggle('d-none', on);
+            saveButton.classList.toggle('d-none', !on);
+            bulkDeleteButton.classList.toggle('d-none', !on);
+            cancelButton.classList.toggle('d-none', !on);
+            if (!on) { listBody.querySelectorAll('.row-select-checkbox').forEach(cb => cb.checked = false); selectAllCheckbox.checked = false; }
+            updateBulkDeleteState();
+        }
+        editToggle.addEventListener('click', () => setEditMode(true));
+        cancelButton.addEventListener('click', () => location.reload());
+        selectAllCheckbox.addEventListener('change', () => {
+            listBody.querySelectorAll('tr:not(.d-none) .row-select-checkbox').forEach(cb => cb.checked = selectAllCheckbox.checked);
+            updateBulkDeleteState();
+        });
+        listBody.addEventListener('change', event => { if (event.target.classList.contains('row-select-checkbox')) updateBulkDeleteState(); });
+        document.querySelector('#employeeBulkDeleteForm').addEventListener('submit', event => {
+            const ids = [...listBody.querySelectorAll('.row-select-checkbox:checked')].map(cb => cb.value);
+            if (ids.length === 0) { event.preventDefault(); return; }
+            if (!confirm(`Delete ${ids.length} selected employee(s)? This cannot be undone.`)) { event.preventDefault(); return; }
+            const form = event.target;
+            form.querySelectorAll('input[name="selectedIds"]').forEach(el => el.remove());
+            ids.forEach(id => { const input = document.createElement('input'); input.type = 'hidden'; input.name = 'selectedIds'; input.value = id; form.appendChild(input); });
+        });
+    }
+    const columns = ['Emp ID', 'First Name', 'Last Name', 'Job Grade', 'Process', 'Accommodation', 'Tel. No', 'Status', 'Special Groups', 'Remark'];
+    const gridBody = document.querySelector('#employeeGrid tbody');
+    const fieldNames = ['EmployeeId', 'FirstName', 'LastName', 'JobGrade', 'Process', 'Accommodation', 'TelephoneNumber', 'Status', 'Groups', 'Remark'];
+    function rowHtml(index) { return `<th scope="row"><button type="button" class="btn btn-sm btn-outline-danger employee-row-remove" aria-label="Delete row ${index + 1}" title="Delete row">&minus;</button><span class="employee-row-number">${index + 1}</span></th>${columns.map((column, col) => `<td><input type="text" class="form-control form-control-sm" name="BatchRows[${index}].${fieldNames[col]}" data-row="${index}" data-col="${col}" aria-label="${column}, row ${index + 1}"${col === 7 ? ' value="Active"' : ''}></td>`).join('')}`; }
+    function addRows(count) { const start = gridBody.rows.length; for (let row = 0; row < count; row++) { const tr = document.createElement('tr'); tr.innerHTML = rowHtml(start + row); gridBody.appendChild(tr); } }
+    function reindexRows() { [...gridBody.rows].forEach((tr, row) => { tr.querySelector('.employee-row-number').textContent = row + 1; const removeButton = tr.querySelector('.employee-row-remove'); removeButton.setAttribute('aria-label', `Delete row ${row + 1}`); tr.querySelectorAll('input[data-col]').forEach(input => { const col = Number(input.dataset.col); input.name = `BatchRows[${row}].${fieldNames[col]}`; input.dataset.row = row; input.setAttribute('aria-label', `${columns[col]}, row ${row + 1}`); }); }); }
+    function cell(row, col) { return gridBody.querySelector(`[data-row="${row}"][data-col="${col}"]`); }
+    function ensureRows(lastRow) { if (lastRow >= gridBody.rows.length) addRows(lastRow - gridBody.rows.length + 10); }
+    function writeRange(startRow, startCol, text) { const matrix = text.replace(/\r\n?/g, '\n').split('\n').filter((line, index, all) => line !== '' || index < all.length - 1).map(line => line.split('\t')); if (!matrix.length) return; ensureRows(startRow + matrix.length - 1); matrix.forEach((values, rowOffset) => values.forEach((value, colOffset) => { const targetCol = startCol + colOffset; if (targetCol < columns.length) cell(startRow + rowOffset, targetCol).value = value.trim(); })); const next = cell(startRow + matrix.length - 1, Math.min(startCol + matrix[0].length - 1, columns.length - 1)); if (next) next.focus(); }
+    gridBody.addEventListener('click', event => { const removeButton = event.target.closest('.employee-row-remove'); if (!removeButton) return; removeButton.closest('tr').remove(); reindexRows(); });
+    gridBody.addEventListener('paste', event => { const input = event.target.closest('input[data-row]'); if (!input) return; event.preventDefault(); writeRange(Number(input.dataset.row), Number(input.dataset.col), event.clipboardData.getData('text')); });
+    gridBody.addEventListener('keydown', event => { if (event.key !== 'Tab') return; const input = event.target.closest('input[data-row]'); if (!input) return; const row = Number(input.dataset.row), col = Number(input.dataset.col); if (!event.shiftKey && row === gridBody.rows.length - 1 && col === columns.length - 1) addRows(10); const next = event.shiftKey ? cell(row, col - 1) || cell(row - 1, columns.length - 1) : cell(row, col + 1) || cell(row + 1, 0); if (next) { event.preventDefault(); next.focus(); } });
+})();
+</script>
+<style>
+    .employee-paste-grid-wrap { max-height: 25rem; border: 1px solid var(--bs-border-color); border-radius: .375rem; }
+    .employee-tabs .nav-link { color: #374151 !important; font-weight: 600; }
+    .employee-tabs .nav-link:hover, .employee-tabs .nav-link:focus { color: #312e81 !important; }
+    .employee-tabs .nav-link.active { color: #4338ca !important; }
+    .employee-paste-grid { min-width: 1370px; }
+    .employee-paste-grid thead th { position: sticky; top: 0; z-index: 3; background-color: #e7eaff !important; color: #17213b; white-space: nowrap; }
+    .employee-paste-grid th[scope="row"] { position: sticky; left: 0; z-index: 2; background-color: #fff; text-align: center; min-width: 5.5rem; }
+    .employee-paste-grid td { padding: .15rem; min-width: 9rem; }
+    .employee-grid-controls .form-select { min-width: 9.5rem; }
+    .employee-row-remove { min-width: 2rem; padding: .1rem .45rem; margin-right: .35rem; font-weight: 700; line-height: 1.2; }
+    .employee-paste-grid input:focus { position: relative; z-index: 3; box-shadow: 0 0 0 .2rem rgba(var(--bs-primary-rgb), .25); }
+    .employee-list-table-wrap { max-height: min(60vh, 32rem); max-width: 100%; overflow: auto; border: 1px solid var(--bs-border-color); border-radius: .375rem; }
+    .employee-list-table { font-size: .8rem; }
+    .employee-list-table thead th { position: sticky; top: 0; z-index: 2; background-color: #e7eaff; }
+    .employee-list-table td, .employee-list-table th { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 12rem; }
+    .employee-list-table th.sortable { cursor: pointer; user-select: none; }
+    .employee-list-table th.sortable:hover { color: #4338ca; }
+    .employee-list-table .sort-arrow { font-size: .65rem; }
+    .employee-list-table .edit-input { min-width: 6rem; font-size: .8rem; padding: .1rem .35rem; }
+    .employee-list-table td { padding: .25rem .5rem; }
+    .employee-list-table .select-col { width: 2rem; max-width: 2rem; text-align: center; }
+</style>
+}

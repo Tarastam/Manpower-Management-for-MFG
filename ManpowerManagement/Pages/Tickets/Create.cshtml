@@ -1,0 +1,5 @@
+@page
+@model ManpowerManagement.Pages.Tickets.CreateModel
+@{ViewData["Title"]="Resignation Ticket";}
+<h1 class="h3">Resignation Request</h1>@if(Model.Message!=null){<div class="alert alert-success">@Model.Message</div>}
+<form method="post" class="card card-body col-lg-7"><div class="mb-3"><label>Requester Employee ID</label><input class="form-control" asp-for="Input.RequesterEmployeeId" required /></div><div class="mb-3"><label>Requester shift</label><select class="form-select" asp-for="Input.RequesterShift"><option>A</option><option>B</option><option>C</option><option>Day</option></select></div><div class="mb-3"><label>Workshop</label><select class="form-select" asp-for="Input.WorkshopId" asp-items="Model.Workshops"></select></div><div class="mb-3"><label>Employee requesting resignation</label><select class="form-select" asp-for="Input.EmployeeId" asp-items="Model.Employees"></select></div><button class="btn btn-primary">Submit Ticket</button></form>

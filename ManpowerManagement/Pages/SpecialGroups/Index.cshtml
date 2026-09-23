@@ -1,0 +1,46 @@
+@page
+@model ManpowerManagement.Pages.SpecialGroups.IndexModel
+@{
+    ViewData["Title"] = "Special Groups";
+}
+<div class="d-flex justify-content-between align-items-center"><div><h1 class="h3 mb-0">Special Groups</h1><small class="text-muted">Manage special employee group tags (e.g. disability, pregnant). Admin only.</small></div></div>
+@if (Model.Message is not null) { <div class="alert alert-success mt-3">@Model.Message</div> }
+@if (Model.Error is not null) { <div class="alert alert-danger mt-3">@Model.Error</div> }
+<div class="card card-body mt-3">
+    <form method="post" class="row g-2">
+        <input type="hidden" asp-for="Input.Id" />
+        <div class="col-md-4"><label class="form-label" asp-for="Input.Name">Name</label><input class="form-control" asp-for="Input.Name" required /></div>
+        <div class="col-md-2"><label class="form-label" asp-for="Input.ColorHex">Color</label><input type="color" class="form-control form-control-color" asp-for="Input.ColorHex" /></div>
+        <div class="col-md-2 d-flex align-items-end"><div class="form-check"><input type="checkbox" class="form-check-input" asp-for="Input.IsActive" /><label class="form-check-label" asp-for="Input.IsActive">Active</label></div></div>
+        <div class="col-md-2 align-self-end"><button class="btn btn-success w-100">Save</button></div>
+    </form>
+</div>
+<div class="table-responsive mt-4">
+<table class="table table-hover table-sm align-middle">
+<thead><tr><th>Name</th><th>Color</th><th>Status</th><th>Employees</th><th></th></tr></thead>
+<tbody>
+@foreach (var g in Model.Groups)
+{
+    <tr>
+        <td><span class="badge" style="background-color: @g.ColorHex;">@g.Name</span></td>
+        <td><span class="d-inline-block rounded" style="width:1.25rem;height:1.25rem;background-color:@g.ColorHex;border:1px solid var(--bs-border-color);"></span></td>
+        <td>@(g.IsActive ? "Active" : "Inactive")</td>
+        <td>@g.EmployeeCount</td>
+        <td class="text-nowrap">
+            <a class="btn btn-sm btn-outline-secondary" asp-route-editId="@g.Id">Edit</a>
+            <form method="post" asp-page-handler="Delete" asp-route-id="@g.Id" class="d-inline special-group-delete-form">
+                <button type="submit" class="btn btn-sm btn-outline-danger special-group-delete-btn">Delete</button>
+            </form>
+        </td>
+    </tr>
+}
+</tbody>
+</table>
+</div>
+@section Scripts {
+<script>
+document.querySelectorAll('.special-group-delete-form').forEach(form => form.addEventListener('submit', event => {
+    if (!confirm('Delete this special group? This cannot be undone.')) event.preventDefault();
+}));
+</script>
+}
