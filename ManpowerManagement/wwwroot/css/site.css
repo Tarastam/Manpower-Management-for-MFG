@@ -31,6 +31,9 @@ body{background:linear-gradient(145deg,#f8f9ff 0%,#eef2ff 53%,#f8fbff 100%)!impo
 /* Keep horizontal movement inside the calendar viewport; prevent an empty page-level scrollbar. */
 body:has(.attendance-page){overflow-x:hidden}.attendance-page,.attendance-page form,.attendance-page .attendance-toolbar{box-sizing:border-box;max-width:100%;min-width:0}.attendance-grid-wrap{max-width:100%;min-width:0;width:100%}
 
+/* Attendance sub-nav (By Shift / Pregnant): dark text for readability on the light page background. */
+.attendance-page .nav-tabs .nav-link{color:#17213b!important;font-weight:600}.attendance-page .nav-tabs .nav-link:hover{color:#3f347e!important}.attendance-page .nav-tabs .nav-link.active{color:#3f347e!important;border-color:#dee2e6 #dee2e6 #fff}
+
 /* Keep horizontal movement inside the employee list viewport; prevent an empty page-level scrollbar. */
 body:has(#employeeListTable){overflow-x:hidden}main,main form,.employee-list-table-wrap{box-sizing:border-box;max-width:100%;min-width:0}
 
@@ -39,3 +42,13 @@ body:has(#employeeListTable){overflow-x:hidden}main,main form,.employee-list-tab
 
 /* Submitted-day indicator: a corner badge that stays legible over any cell state/color. */
 .calendar-cell{position:relative}.calendar-cell[data-confirmed="true"]::after{content:"\2713";position:absolute;top:2px;right:2px;width:14px;height:14px;line-height:14px;border-radius:50%;background:#183a65;color:#fff;font-size:.55rem;font-weight:700;text-align:center;pointer-events:none;box-shadow:0 0 0 1px rgba(255,255,255,.8)}.legend-dot.confirmed{background:#183a65;color:#fff;font-size:.5rem;font-weight:700;line-height:.72rem;text-align:center}.legend-dot.confirmed::before{content:"\2713"}
+
+/* Day headers reflect whether attendance for that date is already stored in the database. */
+.day-heading.submitted{background:#e6f4ea;box-shadow:inset 0 -3px #1e8e3e}
+.day-heading.submitted small{color:#1e6b34}
+.day-heading.partially-submitted{background:#fff7e0;box-shadow:inset 0 -3px #e0a100}
+.day-heading.is-today.submitted,.day-heading.is-today.partially-submitted{background:#e9e7ff}
+.legend-dot.day-submitted{background:#e6f4ea;border:2px solid #1e8e3e}
+.legend-dot.day-partial{background:#fff7e0;border:2px solid #e0a100}
+.attendance-last-submitted{margin-left:auto;color:#1e6b34}
+.ws-slicer{display:flex;flex-direction:column;gap:8px;margin:-14px 0 28px}.ws-slicer-row{display:flex;flex-wrap:wrap;gap:7px}.ws-slicer-row+.ws-slicer-row{border-left:2px solid #d9deec;padding-left:10px}.ws-chip{background:#fff;border:1px solid #d9deec;border-radius:999px;color:#33405b;font:11px 'DM Mono';padding:7px 13px;text-decoration:none;transition:background .15s ease,border-color .15s ease}.ws-chip:hover{background:#f1f2fb;color:#33405b}.ws-chip.has-children:after{content:" ›";color:#8790ac}.ws-chip.active{background:#e7e4ff;border-color:#c6c0ff;color:#4a3fc4;font-weight:600}

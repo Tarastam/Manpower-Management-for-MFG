@@ -1,3 +1,4 @@
+using System.Text;
 using ManpowerManagement.Data;
 using ManpowerManagement.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -22,6 +23,7 @@ public class IndexModel(AppDbContext db) : PageModel
     public List<SelectListItem> GroupOptions { get; set; } = [];
     [TempData] public string? Message { get; set; }
     public string? Error { get; set; }
+    public bool CanDelete => User.IsInRole(Roles.Admin) || User.IsInRole(Roles.Approver);
 
     public async Task OnGetAsync(int? editId) { await Load(); AddBlankBatchRows(); if (editId is int id && Employees.FirstOrDefault(x => x.Id == id) is Employee e) { Input = FromEmployee(e); if (e.CurrentWorkshop is Workshop current && WorkshopOptions.All(x => x.Value != current.Id.ToString())) WorkshopOptions.Add(new SelectListItem(current.Name, current.Id.ToString())); } }
     public async Task<IActionResult> OnPostAsync()
@@ -86,6 +88,7 @@ public class IndexModel(AppDbContext db) : PageModel
     }
     public async Task<IActionResult> OnPostDeleteAsync(int id)
     {
+        if (!CanDelete) return Forbid();
         var employee = await db.Employees.FindAsync(id);
         if (employee is null) return RedirectToPage();
         db.Employees.Remove(employee);
@@ -95,6 +98,7 @@ public class IndexModel(AppDbContext db) : PageModel
     }
     public async Task<IActionResult> OnPostBulkDeleteAsync(List<int> selectedIds)
     {
+        if (!CanDelete) return Forbid();
         if (selectedIds is null || selectedIds.Count == 0) return await ShowError("Select at least one employee to delete.");
         var idSet = selectedIds.ToHashSet();
         var employees = await db.Employees.Where(x => idSet.Contains(x.Id)).ToListAsync();
@@ -102,6 +106,23 @@ public class IndexModel(AppDbContext db) : PageModel
         try { await db.SaveChangesAsync(); Message = $"Deleted {employees.Count} employee(s)."; }
         catch (DbUpdateException) { return await ShowError("Cannot delete one or more selected employees because related records (e.g. resignation tickets) still reference them."); }
         return RedirectToPage();
+    }
+    public async Task<IActionResult> OnGetExportCsvAsync()
+    {
+        var employees = await db.Employees.Include(x => x.CurrentWorkshop).Include(x => x.SpecialGroups).ThenInclude(x => x.SpecialGroup).OrderBy(x => x.EmployeeId).ToListAsync();
+        var sb = new StringBuilder();
+        sb.AppendLine(string.Join(',', new[] { "Emp ID", "Name", "Job Grade", "Process", "Workshop", "Shift", "Accommodation", "Tel. No", "Status", "Special Groups", "Remark" }.Select(CsvField)));
+        foreach (var e in employees)
+        {
+            var groups = string.Join("; ", e.SpecialGroups.Select(x => x.SpecialGroup!.Name));
+            sb.AppendLine(string.Join(',', new[] { e.EmployeeId, e.FullName, e.JobGrade, e.Process, e.CurrentWorkshop?.Name ?? "", e.Shift, e.Accommodation, e.TelephoneNumber, e.EmploymentState.ToString(), groups, e.Remark }.Select(CsvField)));
+        }
+        return File(Encoding.UTF8.GetPreamble().Concat(Encoding.UTF8.GetBytes(sb.ToString())).ToArray(), "text/csv", $"employees_{DateTime.Now:yyyyMMdd_HHmmss}.csv");
+    }
+    private static string CsvField(string? value)
+    {
+        value ??= "";
+        return value.Contains(',') || value.Contains('"') || value.Contains('\n') || value.Contains('\r') ? $"\"{value.Replace("\"", "\"\"")}\"" : value;
     }
     private async Task<IActionResult> ShowError(string error) { Error = error; await Load(); AddBlankBatchRows(); return Page(); }
     private void AddBlankBatchRows() { while (BatchRows.Count < 20) BatchRows.Add(new BatchEmployeeInput()); }

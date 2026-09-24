@@ -24,14 +24,12 @@ builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("AdminOnly", policy => policy.RequireRole(Roles.Admin));
     options.AddPolicy("TicketsManage", policy => policy.RequireRole(Roles.Admin, Roles.Approver));
-    options.AddPolicy("EmployeesManage", policy => policy.RequireRole(Roles.Admin, Roles.Approver));
 });
 builder.Services.AddRazorPages(options =>
 {
     options.Conventions.AuthorizeFolder("/Admin", "AdminOnly");
     options.Conventions.AuthorizeFolder("/SpecialGroups", "AdminOnly");
     options.Conventions.AuthorizePage("/Tickets/Manage", "TicketsManage");
-    options.Conventions.AuthorizePage("/Employees/Index", "EmployeesManage");
 });
 builder.Services.Configure<Microsoft.AspNetCore.Mvc.MvcOptions>(options =>
 {

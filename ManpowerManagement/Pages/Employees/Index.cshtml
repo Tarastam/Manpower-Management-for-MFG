@@ -7,7 +7,7 @@
     var workshopOptionsHtml = string.Concat(Model.WorkshopOptions.Select(ws => $"<option value=\"{ws.Value}\">{ws.Text}</option>"));
     var groupOptionsHtml = string.Concat(Model.GroupOptions.Select(g => $"<option value=\"{g.Text}\">{g.Text}</option>"));
 }
-<div class="d-flex justify-content-between align-items-center"><div><h1 class="h3 mb-0">Employees</h1><small class="text-muted">Available to Admin and Approval modes.</small></div><button class="btn btn-primary" data-bs-toggle="collapse" data-bs-target="#employeeForm">Add employee</button></div>
+<div class="d-flex justify-content-between align-items-center"><div><h1 class="h3 mb-0">Employees</h1></div><div class="d-flex gap-2"><a class="btn btn-outline-secondary" asp-page-handler="ExportCsv">Export CSV</a><button class="btn btn-primary" data-bs-toggle="collapse" data-bs-target="#employeeForm">Add employee</button></div></div>
 @if (Model.Message is not null) { <div class="alert alert-success mt-3">@Model.Message</div> }
 @if (Model.Error is not null) { <div class="alert alert-danger mt-3">@Model.Error</div> }
 <div id="employeeForm" class="collapse @(Model.Input.Id is not null || Model.Error is not null ? "show" : "") card card-body mt-3">
@@ -42,13 +42,13 @@
     <div class="d-flex gap-2">
         <button type="button" id="gridEditToggle" class="btn btn-sm btn-outline-primary">Edit grid</button>
         <button type="submit" form="employeeGridForm" id="gridSaveButton" class="btn btn-sm btn-success d-none">Save all changes</button>
-        <button type="submit" form="employeeBulkDeleteForm" id="gridBulkDeleteButton" class="btn btn-sm btn-outline-danger d-none" disabled>Delete selected</button>
+        <button type="submit" form="employeeBulkDeleteForm" id="gridBulkDeleteButton" class="btn btn-sm btn-outline-danger d-none" style="@(Model.CanDelete ? "" : "display:none")" disabled>Delete selected</button>
         <button type="button" id="gridCancelButton" class="btn btn-sm btn-outline-secondary d-none">Cancel</button>
     </div>
 </div>
 <form method="post" asp-page-handler="GridSave" id="employeeGridForm">
 <div class="table-responsive employee-list-table-wrap"><table class="table table-hover table-sm mb-0 align-middle employee-list-table" id="employeeListTable"><thead><tr>
-    <th class="select-col d-none"><input type="checkbox" id="selectAllRows" aria-label="Select all rows" /></th>
+    <th class="select-col d-none" style="@(Model.CanDelete ? "" : "display:none")"><input type="checkbox" id="selectAllRows" aria-label="Select all rows" /></th>
     <th class="sortable" data-sort="text" data-col="0">Emp ID <span class="sort-arrow"></span></th>
     <th class="sortable" data-sort="text" data-col="1">Name <span class="sort-arrow"></span></th>
     <th class="sortable" data-sort="text" data-col="2">Job Grade <span class="sort-arrow"></span></th>
@@ -64,7 +64,7 @@
 </tr></thead><tbody>
 @for (var i = 0; i < Model.Employees.Count; i++) { var e = Model.Employees[i];
     <tr data-workshop="@e.CurrentWorkshop?.Name" data-shift="@e.Shift" data-process="@e.Process" data-groups="@string.Join(",", e.SpecialGroups.Select(x => x.SpecialGroup!.Name))" data-row="@i" data-id="@e.Id">
-        <td class="select-col d-none"><input type="checkbox" class="row-select-checkbox" value="@e.Id" aria-label="Select @e.EmployeeId" /></td>
+        <td class="select-col d-none" style="@(Model.CanDelete ? "" : "display:none")"><input type="checkbox" class="row-select-checkbox" value="@e.Id" aria-label="Select @e.EmployeeId" /></td>
         <td data-field="EmployeeId" data-value="@e.EmployeeId"><input type="hidden" name="GridRows[@i].Id" value="@e.Id" /><span class="view-text">@e.EmployeeId</span></td>
         <td data-field="FullName" data-value="@e.FullName"><span class="view-text">@e.FullName</span></td>
         <td data-field="JobGrade" data-value="@e.JobGrade"><span class="view-text">@e.JobGrade</span></td>
@@ -76,7 +76,7 @@
         <td data-field="EmploymentState" data-value="@e.EmploymentState"><span class="view-text">@e.EmploymentState</span></td>
         <td data-field="Groups" data-value="@string.Join(",", e.SpecialGroups.Select(x => x.SpecialGroup!.Name))"><span class="view-text">@foreach (var g in e.SpecialGroups.Select(x => x.SpecialGroup).Where(x => x is not null)) { <span class="badge me-1" style="background-color: @g!.ColorHex;">@g.Name</span> }</span></td>
         <td data-field="Remark" data-value="@e.Remark"><span class="view-text">@e.Remark</span></td>
-        <td class="text-nowrap view-actions"><a class="btn btn-sm btn-outline-secondary" asp-route-editId="@e.Id">Edit</a> <button type="submit" class="btn btn-sm btn-outline-danger employee-delete-btn" data-employee-id="@e.Id">Delete</button></td>
+        <td class="text-nowrap view-actions"><a class="btn btn-sm btn-outline-secondary" asp-route-editId="@e.Id">Edit</a> @if (Model.CanDelete) { <button type="submit" class="btn btn-sm btn-outline-danger employee-delete-btn" data-employee-id="@e.Id">Delete</button> }</td>
     </tr> }</tbody></table></div>
 </form>
 <form method="post" asp-page-handler="Delete" id="employeeDeleteForm"><input type="hidden" name="id" id="employeeDeleteFormId" /></form>

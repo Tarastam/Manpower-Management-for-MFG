@@ -31,7 +31,7 @@
     @if (Model.GridRows.Any())
     {
         <form method="post" id="attendanceForm">
-            <input type="hidden" asp-for="WorkshopId" /><input type="hidden" asp-for="Shift" /><input type="hidden" asp-for="StartMonth" /><input type="hidden" asp-for="EndMonth" /><input type="hidden" id="submitDateField" name="SubmitDate" value="" />
+            <input type="hidden" asp-for="WorkshopId" /><input type="hidden" asp-for="Shift" /><input type="hidden" asp-for="StartMonth" /><input type="hidden" asp-for="EndMonth" /><input type="hidden" id="submitStartDateField" name="SubmitStartDate" value="" /><input type="hidden" id="submitEndDateField" name="SubmitEndDate" value="" />
             <div class="attendance-toolbar">
                 <div class="attendance-search-actions">
                     <div class="attendance-search">
@@ -39,8 +39,9 @@
                         <label class="visually-hidden" for="attendanceSearch">Search employee</label><input id="attendanceSearch" type="search" placeholder="Search employee" autocomplete="off" />
                     </div>
                     <button class="btn attendance-today-button" id="attendanceToday" type="button"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="16" rx="2" stroke="currentColor" stroke-width="2"/><path d="M8 3v4M16 3v4M3 10h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>Today</button>
+                    <a class="btn attendance-today-button" asp-page-handler="ExportCsv" asp-route-workshopId="@Model.WorkshopId" asp-route-shift="@Model.Shift" asp-route-startMonth="@Model.StartMonth" asp-route-endMonth="@Model.EndMonth">Export CSV</a>
                 </div>
-                <div class="attendance-legend" aria-label="Calendar color legend"><span><i class="legend-dot hours"></i>Custom hours</span><span class="leave-key"><i class="legend-dot leave-annual"></i>Annual</span><span class="leave-key"><i class="legend-dot leave-sick"></i>Sick</span><span class="leave-key"><i class="legend-dot leave-business"></i>Business</span><span class="leave-key"><i class="legend-dot leave-other"></i>Other</span><span class="leave-key"><i class="legend-dot leave-absent"></i>Absent</span><span class="leave-key"><i class="legend-dot leave-mother"></i>Mother</span><span><i class="legend-dot transfer"></i>Transfer</span><span><i class="legend-dot off"></i>OFF</span><span><i class="legend-dot today"></i>Today</span><span><i class="legend-dot confirmed"></i>Submitted</span></div>
+                <div class="attendance-legend" aria-label="Calendar color legend"><span><i class="legend-dot hours"></i>Custom hours</span><span class="leave-key"><i class="legend-dot leave-annual"></i>Annual</span><span class="leave-key"><i class="legend-dot leave-sick"></i>Sick</span><span class="leave-key"><i class="legend-dot leave-business"></i>Business</span><span class="leave-key"><i class="legend-dot leave-other"></i>Other</span><span class="leave-key"><i class="legend-dot leave-absent"></i>Absent</span><span class="leave-key"><i class="legend-dot leave-mother"></i>Mother</span><span><i class="legend-dot transfer"></i>Transfer</span><span><i class="legend-dot off"></i>OFF</span><span><i class="legend-dot today"></i>Today</span><span><i class="legend-dot confirmed"></i>Submitted</span><span><i class="legend-dot day-submitted"></i>Day fully submitted</span><span><i class="legend-dot day-partial"></i>Day partially submitted</span>@if (Model.LastSubmittedDay is DateOnly lastSubmitted) { <span class="attendance-last-submitted">Updated through <strong>@lastSubmitted.ToString("d MMM yyyy")</strong></span> }</div>
             </div>
 
             <div class="attendance-grid-wrap" id="attendanceGridWrap" tabindex="0" aria-label="Attendance calendar table. Scroll horizontally to view all dates.">
@@ -54,7 +55,7 @@
                             @foreach (var week in Model.WeekGroups)
                             {
                                 var hasSaturday = Enumerable.Range(week.StartIndex, week.Count).Any(index => Model.Days[index].DayOfWeek == DayOfWeek.Saturday);
-                                @for (var j = week.StartIndex; j < week.StartIndex + week.Count; j++) { var day = Model.Days[j]; var weekend = day.DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday; var addWeeklyTotal = day.DayOfWeek == DayOfWeek.Saturday || (j == week.StartIndex + week.Count - 1 && !hasSaturday); <th class="day-heading @(weekend ? "weekend" : "") @(day == today ? "is-today" : "") @(day > today ? "future" : day < today ? "past" : "")" data-date="@day.ToString("yyyy-MM-dd")" tabindex="-1"><span>@day.Day</span><small>@day.ToString("ddd")</small></th>@if (addWeeklyTotal) { <th class="weekly-heading"><span>Σ</span><small>WEEK</small></th> } }
+                                @for (var j = week.StartIndex; j < week.StartIndex + week.Count; j++) { var day = Model.Days[j]; var weekend = day.DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday; var addWeeklyTotal = day.DayOfWeek == DayOfWeek.Saturday || (j == week.StartIndex + week.Count - 1 && !hasSaturday); <th class="day-heading @(weekend ? "weekend" : "") @(day == today ? "is-today" : "") @(day > today ? "future" : day < today ? "past" : "") @(Model.SubmittedDays.Contains(day) ? "submitted" : Model.PartiallySubmittedDays.Contains(day) ? "partially-submitted" : "")" data-date="@day.ToString("yyyy-MM-dd")" tabindex="-1" title="@(Model.SubmittedDays.Contains(day) ? "Submitted" : Model.PartiallySubmittedDays.Contains(day) ? "Partially submitted" : "Not submitted")"><span>@day.Day</span><small>@day.ToString("ddd")</small></th>@if (addWeeklyTotal) { <th class="weekly-heading"><span>Σ</span><small>WEEK</small></th> } }
                             }
                         </tr>
                     </thead>
@@ -85,7 +86,7 @@
             </div>
             <div class="attendance-grid-foot"><span>Showing @Model.GridRows.Count employee@(Model.GridRows.Count == 1 ? "" : "s")</span><span>Scroll horizontally to view more dates →</span></div>
             <div id="attendanceClientError" class="alert alert-danger mt-3 mb-0" role="alert" tabindex="-1" hidden></div>
-            <div class="attendance-save"><span class="text-muted small">Changes are staged until you submit the calendar.</span><button type="button" class="btn btn-success px-4" id="attendanceSubmit">Submit attendance</button></div>
+            <div class="attendance-save"><span class="text-muted small">Edits are staged until you submit. @(Model.IsAdmin ? "Admins can confirm a date range." : "Select the date to confirm.") Submitting confirms every day in range, including unedited defaults. Working hours cannot be entered ahead of today, except leave.</span><button type="button" class="btn btn-success px-4" id="attendanceSubmit">Submit attendance</button></div>
         </form>
     }
 </div>
@@ -117,9 +118,20 @@
 <div class="modal fade" id="confirmSubmitModal" tabindex="-1" aria-labelledby="confirmSubmitModalTitle" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content">
     <div class="modal-header"><h2 class="modal-title fs-5" id="confirmSubmitModalTitle">Confirm submission</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
     <div class="modal-body">
-        <p>Submit attendance data for which date?</p>
-        <label class="form-label visually-hidden" for="confirmSubmitDate">Date</label>
-        <input type="date" class="form-control" id="confirmSubmitDate" min="@firstDate.ToString("yyyy-MM-dd")" max="@lastDate.ToString("yyyy-MM-dd")" />
+        @if (Model.IsAdmin)
+        {
+            <p>Confirm attendance for which date range? Every day in range will be submitted, including unedited defaults.</p>
+            <div class="d-flex gap-2">
+                <div class="flex-fill"><label class="form-label small" for="confirmSubmitStartDate">From</label><input type="date" class="form-control" id="confirmSubmitStartDate" min="@firstDate.ToString("yyyy-MM-dd")" max="@lastDate.ToString("yyyy-MM-dd")" /></div>
+                <div class="flex-fill"><label class="form-label small" for="confirmSubmitEndDate">To</label><input type="date" class="form-control" id="confirmSubmitEndDate" min="@firstDate.ToString("yyyy-MM-dd")" max="@lastDate.ToString("yyyy-MM-dd")" /></div>
+            </div>
+        }
+        else
+        {
+            <p>Confirm attendance for which date? The full day will be submitted, including unedited defaults.</p>
+            <label class="form-label visually-hidden" for="confirmSubmitStartDate">Date</label>
+            <input type="date" class="form-control" id="confirmSubmitStartDate" min="@firstDate.ToString("yyyy-MM-dd")" max="@lastDate.ToString("yyyy-MM-dd")" />
+        }
         <div id="confirmSubmitError" class="alert alert-danger py-2 mt-3 mb-0 small" role="alert" hidden></div>
     </div>
     <div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button><button type="button" class="btn btn-success" id="confirmSubmitOk">Submit</button></div>
@@ -128,7 +140,7 @@
 @section Scripts {
 <script>
 (() => {
-    const standardHours = 10.67, maxWeeklyHours = 60, noLeave = '@((int)LeaveType.None)', motherLeave = '@((int)LeaveType.MotherLeave)', selectedWorkshop = '@Model.WorkshopId', todayIso = '@today.ToString("yyyy-MM-dd")';
+    const standardHours = 10.67, maxWeeklyHours = 60, noLeave = '@((int)LeaveType.None)', motherLeave = '@((int)LeaveType.MotherLeave)', selectedWorkshop = '@Model.WorkshopId', todayIso = '@today.ToString("yyyy-MM-dd")', isAdmin = @Model.IsAdmin.ToString().ToLowerInvariant();
     let activeCell;
     const byId = id => document.getElementById(id);
 
@@ -206,21 +218,28 @@
         const restoredHours = activeCell.dataset.off === 'true' ? 0 : standardHours; activeCell.querySelector('.cell-hours').value = restoredHours.toFixed(2); activeCell.querySelector('.cell-leave-type').value = noLeave; activeCell.querySelector('.cell-leave-hours').value = '0.00'; activeCell.querySelector('.cell-value').textContent = activeCell.dataset.off === 'true' ? 'OFF' : restoredHours.toFixed(2); activeCell.querySelector('.cell-note').textContent = activeCell.dataset.off === 'true' ? 'Tap for OT' : workshop !== selectedWorkshop ? 'transfer' : 'hrs'; setCellState(activeCell, noLeave, workshop !== selectedWorkshop, false); updateRowTotals(activeCell.closest('tr')); syncWeeklyError(); bootstrap.Modal.getOrCreateInstance(byId('attendanceModal')).hide();
     });
 
-    function cellsForDate(dateIso) { return [...document.querySelectorAll('.calendar-cell')].filter(cell => cell.dataset.date === dateIso); }
-    function isDateAlreadySubmitted(dateIso) { return cellsForDate(dateIso).some(cell => cell.dataset.confirmed === 'true'); }
+    function cellsInRange(startIso, endIso) { return [...document.querySelectorAll('.calendar-cell')].filter(cell => cell.dataset.date >= startIso && cell.dataset.date <= endIso); }
+    function unconfirmedCellsInRange(startIso, endIso) { return cellsInRange(startIso, endIso).filter(cell => cell.dataset.confirmed !== 'true'); }
 
     byId('attendanceSubmit')?.addEventListener('click', () => {
         const invalidTotal = [...document.querySelectorAll('.weekly-total')].find(total => Number(total.querySelector('output').textContent) > maxWeeklyHours);
         if (invalidTotal) { bootstrap.Modal.getOrCreateInstance(byId('weeklyLimitModal')).show(); invalidTotal.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' }); return; }
-        byId('confirmSubmitDate').value = todayIso; byId('confirmSubmitError').hidden = true;
+        byId('confirmSubmitStartDate').value = todayIso;
+        if (isAdmin) byId('confirmSubmitEndDate').value = todayIso;
+        byId('confirmSubmitError').hidden = true;
         bootstrap.Modal.getOrCreateInstance(byId('confirmSubmitModal')).show();
     });
     byId('confirmSubmitOk')?.addEventListener('click', () => {
-        const dateIso = byId('confirmSubmitDate').value;
-        if (!dateIso) { byId('confirmSubmitError').hidden = false; byId('confirmSubmitError').textContent = 'Select a date to submit.'; return; }
-        if (!cellsForDate(dateIso).length) { byId('confirmSubmitError').hidden = false; byId('confirmSubmitError').textContent = 'That date is outside the loaded calendar.'; return; }
-        if (isDateAlreadySubmitted(dateIso)) { byId('confirmSubmitError').hidden = false; byId('confirmSubmitError').textContent = 'This date is already submitted. Edit that day individually in the table instead.'; return; }
-        byId('submitDateField').value = dateIso;
+        const startIso = byId('confirmSubmitStartDate').value;
+        const endIso = isAdmin ? (byId('confirmSubmitEndDate').value || startIso) : startIso;
+        if (!startIso) { byId('confirmSubmitError').hidden = false; byId('confirmSubmitError').textContent = 'Select a date to submit.'; return; }
+        if (endIso < startIso) { byId('confirmSubmitError').hidden = false; byId('confirmSubmitError').textContent = 'End date cannot be before start date.'; return; }
+        const pending = unconfirmedCellsInRange(startIso, endIso);
+        if (!pending.length) { byId('confirmSubmitError').hidden = false; byId('confirmSubmitError').textContent = 'All days in that date range are already submitted.'; return; }
+        const futureWorkingHours = pending.find(cell => cell.dataset.date > todayIso && cell.querySelector('.cell-leave-type').value === noLeave);
+        if (futureWorkingHours) { byId('confirmSubmitError').hidden = false; byId('confirmSubmitError').textContent = `Working hours for ${futureWorkingHours.dataset.date} cannot be entered in advance. Only leave can be recorded ahead of today.`; return; }
+        byId('submitStartDateField').value = startIso;
+        byId('submitEndDateField').value = endIso;
         const button = byId('attendanceSubmit'); button.disabled = true; button.textContent = 'Saving…';
         bootstrap.Modal.getOrCreateInstance(byId('confirmSubmitModal')).hide();
         byId('attendanceForm').submit();
